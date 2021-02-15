@@ -21,36 +21,43 @@ class Application(tk.Frame):
     #todo add buttons to change order of files
     #todo allow drag and drop of files
     def create_widgets(self):
-
-        #treeview with all files from listOfFilesToMerge
-        self.tree = ttk.Treeview(root, columns=('#1', '#2'), show='headings', selectmode='browse')
-        self.tree.heading('#1', text='Pages')
-        self.tree.heading('#2', text='Filename')
-        self.tree.pack(padx=10,pady=10,fill=tk.BOTH,expand=True)
-
         #Button to add document to list
         self.addBtn = tk.Button(self)
         self.addBtn["text"] = "Add document to be merged"
         self.addBtn["command"] = self.addDocumentToList
-        self.addBtn.pack(side="left")
-
-        #Button to merge all pdfs in current location
-        self.mergeBtn = tk.Button(self)
-        self.mergeBtn["text"] = "Merge all pdfs"
-        self.mergeBtn["command"] = self.mergePdfs
-        self.mergeBtn.pack(side="bottom")
+        self.addBtn.grid(row=0,column=0,sticky="W")
+        #self.addBtn.pack(padx=5, pady=10, side="left")
 
         #Button up arrow
         self.upBtn = tk.Button(self)
         self.upBtn["text"] = "↑"
         self.upBtn["command"] = partial(self.moveElementInList, Directions.Up)
-        self.upBtn.pack(side="right")
+        self.upBtn.grid(row=0,column=1,sticky="E")
+        #self.upBtn.pack(side="right")
 
         #Button down arrow
         self.downBtn = tk.Button(self)
         self.downBtn["text"] ="↓"
         self.downBtn["command"] = partial(self.moveElementInList, Directions.Down)
-        self.downBtn.pack(side="right")
+        self.downBtn.grid(row=0,column=2,sticky="W")
+        #self.downBtn.pack(side="right")
+
+        #treeview with all files from listOfFilesToMerge
+        self.tree = ttk.Treeview(self, columns=('#1', '#2'), show='headings', selectmode='browse')
+        self.tree.heading('#1', text='Pages')
+        self.tree.column("#1", width=50) 
+        self.tree.heading('#2', text='Filename')
+        self.tree.grid(row=1,column=0,columnspan=3)
+        #self.tree.pack(padx=10,pady=10,fill="x",expand=True)
+
+
+        #Button to merge all pdfs in current location
+        self.mergeBtn = tk.Button(self)
+        self.mergeBtn["text"] = "Merge all pdfs"
+        self.mergeBtn["command"] = self.mergePdfs
+        self.mergeBtn.grid(row=2,column=2,sticky="E")
+        #self.mergeBtn.pack(padx=5, pady=20, side="left")
+
 
     #adds documents from fileselector to the listbox and listOfFilesToMerge
     def addDocumentToList(self):
@@ -109,8 +116,6 @@ class Application(tk.Frame):
 
 
 
-root = tk.Tk()
-root.geometry("500x300")
-app = Application(master=root)
-app.pack(fill=tk.BOTH, expand=True)
+app = Application(master = tk.Tk())
+app.master.title("PDF_Merger")
 app.mainloop()

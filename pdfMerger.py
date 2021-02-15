@@ -1,10 +1,12 @@
 import os
 from PyPDF2 import PdfFileMerger
+from PyPDF2 import PdfFileReader
 import tkinter as tk
 from tkinter import filedialog 
 from tkinter import messagebox
 from functools import partial
 from directions import Directions
+from tkinter import ttk
 
 class Application(tk.Frame):
     listOfFilesToMerge = []
@@ -19,21 +21,24 @@ class Application(tk.Frame):
     #todo add buttons to change order of files
     #todo allow drag and drop of files
     def create_widgets(self):
-        #Listbox with all documents from listOfFiles
-        self.listbox = tk.Listbox(self)
-        self.listbox.pack(padx=10,pady=10,fill=tk.BOTH,expand=True)
+
+        #treeview with all files from listOfFilesToMerge
+        self.tree = ttk.Treeview(root, columns=('#1', '#2'), show='headings', selectmode='browse')
+        self.tree.heading('#1', text='Pages')
+        self.tree.heading('#2', text='Filename')
+        self.tree.pack(padx=10,pady=10,fill=tk.BOTH,expand=True)
 
         #Button to add document to list
         self.addBtn = tk.Button(self)
         self.addBtn["text"] = "Add document to be merged"
         self.addBtn["command"] = self.addDocumentToList
-        self.addBtn.pack()
+        self.addBtn.pack(side="left")
 
         #Button to merge all pdfs in current location
         self.mergeBtn = tk.Button(self)
         self.mergeBtn["text"] = "Merge all pdfs"
         self.mergeBtn["command"] = self.mergePdfs
-        self.mergeBtn.pack(side="top")
+        self.mergeBtn.pack(side="bottom")
 
         #Button up arrow
         self.upBtn = tk.Button(self)
@@ -47,23 +52,22 @@ class Application(tk.Frame):
         self.downBtn["command"] = partial(self.moveElementInList, Directions.Down)
         self.downBtn.pack(side="right")
 
-        #quit button
-        self.quit = tk.Button(self, text="QUIT", fg="red", command=self.master.destroy)
-        self.quit.pack(side="bottom")
-
     #adds documents from fileselector to the listbox and listOfFilesToMerge
     def addDocumentToList(self):
         filenames = tk.filedialog.askopenfilenames(initialdir = ".", title = "Select a File", filetypes = (("PDF files", "*.pdf*"), ("all files", "*.*"))) 
         for file in filenames:
             self.listOfFilesToMerge.append(file)
-        self.fillListboxFromList()
+        self.fillTreeFromList()
 
     #update listbox with elements from listOfFilesToMerge
-    def fillListboxFromList(self):
+    def fillTreeFromList(self):
         #todo shorter filename
-        self.listbox.delete(0,tk.END)
+        self.tree.delete(*self.tree.get_children())#delete all children (*-splat/unpack-operator produces the individual elemtents of the iterable)
         for file in self.listOfFilesToMerge:
-            self.listbox.insert("end", file)
+            with open(file, "rb") as pdf_file:
+                head, tail = os.path.split(file)
+                pdf_reader = PdfFileReader(pdf_file)
+                self.tree.insert('', tk.END, values=(pdf_reader.numPages,tail))
 
     def mergePdfs(self):
          #TODO: disable btn if no files
@@ -87,20 +91,23 @@ class Application(tk.Frame):
     #if dir is enum Direction.Up the currently selected item in the listbox switches with the upper elemet
     #if dir is enum Direction.Down the selected item switches with the next element
     def moveElementInList(self, dir):
-        picked = self.listbox.get(tk.ACTIVE)
-        pickedIdx = self.listOfFilesToMerge.index(picked)
+        pickedIdx = self.tree.index(self.tree.selection())
         if dir == Directions.Up:
             #todo instead disable btn
             if pickedIdx == 0:
                 return
             self.listOfFilesToMerge[pickedIdx-1], self.listOfFilesToMerge[pickedIdx] = self.listOfFilesToMerge[pickedIdx], self.listOfFilesToMerge[pickedIdx-1]
-            self.fillListboxFromList()
+            self.fillTreeFromList()
+            self.tree.selection_set(self.tree.get_children()[pickedIdx-1]) 
         elif dir == Directions.Down:
             #todo instead disable btn
             if pickedIdx == len(self.listOfFilesToMerge)-1:
                 return
             self.listOfFilesToMerge[pickedIdx+1], self.listOfFilesToMerge[pickedIdx] = self.listOfFilesToMerge[pickedIdx], self.listOfFilesToMerge[pickedIdx+1]
-            self.fillListboxFromList()
+            self.fillTreeFromList()
+            self.tree.selection_set(self.tree.get_children()[pickedIdx+1]) 
+
+
 
 root = tk.Tk()
 root.geometry("500x300")
